@@ -6,6 +6,7 @@ import {
     input,
     instantiate,
     KeyCode,
+    Label,
     Node,
     Prefab,
     random
@@ -25,6 +26,12 @@ enum Direction {
 
 @ccclass("Game")
 export class Game extends Component {
+    @property(Node)
+    result: Node;
+
+    @property(Node)
+    resultText: Node;
+
     @property(Node)
     grids: Node;
 
@@ -50,6 +57,7 @@ export class Game extends Component {
     }
 
     start() {
+        this.result.active = false;
         this.createNextNumbers();
     }
 
@@ -81,7 +89,7 @@ export class Game extends Component {
                 }
             }
         }
-        coords.sort(() => random() - 0.5); //随机排序
+        coords.sort(() => random() - 0.5);
 
         if (coords.length > 1) {
             this.createNumberAt(coords[0][0], coords[0][1]);
@@ -91,8 +99,25 @@ export class Game extends Component {
         }
     }
 
-    private gameOver() {
-        console.log("Game Over");
+    private onGameOver() {
+        this.result.active = true;
+        this.resultText.getComponent(Label).string = "Game Over";
+    }
+
+    private onWinner() {
+        this.result.active = true;
+        this.resultText.getComponent(Label).string = "You Win!"
+    }
+
+    onRestart() {
+        this.numbers.destroyAllChildren();
+        for (let i = 0; i < MaxRow; i++) {
+            for (let j = 0; j < MaxCol; j++) {
+                this.numberMatrix[i][j] = null;
+            }
+        }
+        this.createNextNumbers();
+        this.result.active = false;
     }
 
     private mergeAndJustify(direction: Direction) {
@@ -101,7 +126,13 @@ export class Game extends Component {
         this.justify(direction);
         this.resetMergedState();
         this.createNextNumbers();
-        this.testIfGameOver() && this.gameOver();
+
+        if (this.checkIfWinner()) {
+            this.onWinner();
+            return;
+        }
+
+        this.checkIfGameOver() && this.onGameOver();
     }
 
     private createNumberAt(i: number, j: number) {
@@ -115,52 +146,49 @@ export class Game extends Component {
         this.numberMatrix[i][j].value = random() < 0.9 ? 2 : 4;
     }
 
-    private updateNumberPosition(num: Number, i: number, j: number) {
-        num.node.setWorldPosition(
+    private updateNumberPosition(target: Number, i: number, j: number) {
+        target.node.setWorldPosition(
             this.grids.children[MaxCol * i + j].worldPosition,
         );
     }
 
-    /**
-     * 检查游戏是否结束
-     * 游戏结束条件：上下左右四个方向都没有可以两两合并的数字了
-     * @returns 如果游戏结束返回true，否则返回false
-     */
-    private testIfGameOver(): boolean {
-        // 检查是否有空位
+    private checkIfWinner(): boolean {
+        const index = this.numbers.children.findIndex(
+            chilld => chilld.getComponent(Number).value >= 2048);
+        return index > -1;
+    }
+
+    private checkIfGameOver(): boolean {
         for (let rowIndex = 0; rowIndex < MaxRow; rowIndex++) {
             for (let columnIndex = 0; columnIndex < MaxCol; columnIndex++) {
                 if (this.numberMatrix[rowIndex][columnIndex] === null) {
-                    return false; // 还有空位，游戏继续
+                    return false;
                 }
             }
         }
 
-        // 检查水平方向（左右）是否有可合并的相邻方块
         for (let rowIndex = 0; rowIndex < MaxRow; rowIndex++) {
             for (let columnIndex = 0; columnIndex < MaxCol - 1; columnIndex++) {
                 const current = this.numberMatrix[rowIndex][columnIndex];
                 const next = this.numberMatrix[rowIndex][columnIndex + 1];
 
                 if (current && next && current.value === next.value) {
-                    return false; // 有可合并的相邻方块，游戏继续
+                    return false;
                 }
             }
         }
 
-        // 检查垂直方向（上下）是否有可合并的相邻方块
         for (let columnIndex = 0; columnIndex < MaxCol; columnIndex++) {
             for (let rowIndex = 0; rowIndex < MaxRow - 1; rowIndex++) {
                 const current = this.numberMatrix[rowIndex][columnIndex];
                 const below = this.numberMatrix[rowIndex + 1][columnIndex];
 
                 if (current && below && current.value === below.value) {
-                    return false; // 有可合并的相邻方块，游戏继续
+                    return false;
                 }
             }
         }
 
-        // 所有条件都不满足，游戏结束
         return true;
     }
 
@@ -317,7 +345,6 @@ export class Game extends Component {
                 break;
 
             case Direction.Right:
-                // 向右合并：从右向左遍历，合并相邻相同方块
                 for (let rowIndex = 0; rowIndex < MaxRow; rowIndex++) {
                     const currentRow = this.numberMatrix[rowIndex];
                     for (let first = MaxCol - 1, second = MaxCol - 2; first >= 0 && second >= 0; first--, second--) {
@@ -341,7 +368,6 @@ export class Game extends Component {
                 break;
 
             case Direction.Up:
-                // 向上合并：按列处理，从上向下合并相邻相同方块
                 for (let columnIndex = 0; columnIndex < MaxCol; columnIndex++) {
                     for (let first = 0, second = 1; first < MaxRow && second < MaxRow; first++, second++) {
                         if (this.numberMatrix[first][columnIndex] === null || this.numberMatrix[second][columnIndex] === null) {
@@ -364,7 +390,6 @@ export class Game extends Component {
                 break;
 
             case Direction.Down:
-                // 向下合并：按列处理，从下向上合并相邻相同方块
                 for (let columnIndex = 0; columnIndex < MaxCol; columnIndex++) {
                     for (let first = MaxRow - 1, second = MaxRow - 2; first >= 0 && second >= 0; first--, second--) {
                         if (this.numberMatrix[first][columnIndex] === null || this.numberMatrix[second][columnIndex] === null) {
