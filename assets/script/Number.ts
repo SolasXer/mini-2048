@@ -1,4 +1,5 @@
-import { _decorator, Component, Node, Label, Sprite, Color } from "cc";
+import { _decorator, Color, Component, Label, Node, Sprite } from "cc";
+import { NumberColor } from "./Const";
 const { ccclass, property } = _decorator;
 
 @ccclass("Number")
@@ -15,7 +16,7 @@ export class Number extends Component {
     set value(value: number) {
         this._value = value;
         this.text.getComponent(Label).string = `${value}`;
-        // this.node.getComponent(Sprite).color 
+        this.getComponent(Sprite).color = new Color(NumberColor[value])
     }
 
     hasMerged: boolean = false;

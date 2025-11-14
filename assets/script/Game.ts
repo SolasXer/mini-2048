@@ -93,7 +93,7 @@ export class Game extends Component {
 
         if (coords.length > 1) {
             this.createNumberAt(coords[0][0], coords[0][1]);
-            this.createNumberAt(coords[1][0], coords[1][1]);
+            random() > 0.5 && this.createNumberAt(coords[1][0], coords[1][1]);
         } else if (coords.length === 1) {
             this.createNumberAt(coords[0][0], coords[0][1]);
         }
@@ -101,12 +101,12 @@ export class Game extends Component {
 
     private onGameOver() {
         this.result.active = true;
-        this.resultText.getComponent(Label).string = "Game Over";
+        this.resultText.getComponent(Label).string = "游戏结束";
     }
 
     private onWinner() {
         this.result.active = true;
-        this.resultText.getComponent(Label).string = "You Win!"
+        this.resultText.getComponent(Label).string = "2048"
     }
 
     onRestart() {
