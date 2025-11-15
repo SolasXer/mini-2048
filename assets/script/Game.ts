@@ -9,7 +9,8 @@ import {
     Label,
     Node,
     Prefab,
-    random
+    random,
+    randomRangeInt
 } from "cc";
 import { Number } from "./Number";
 const { ccclass, property } = _decorator;
@@ -89,13 +90,10 @@ export class Game extends Component {
                 }
             }
         }
-        coords.sort(() => random() - 0.5);
 
-        if (coords.length > 1) {
-            this.createNumberAt(coords[0][0], coords[0][1]);
-            random() > 0.5 && this.createNumberAt(coords[1][0], coords[1][1]);
-        } else if (coords.length === 1) {
-            this.createNumberAt(coords[0][0], coords[0][1]);
+        if (coords.length > 0) {
+            const randEle = coords[randomRangeInt(0, coords.length)];
+            this.createNumberAt(randEle[0], randEle[1]);
         }
     }
 
